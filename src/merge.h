@@ -20,7 +20,11 @@ DEALINGS IN THE SOFTWARE.
 #pragma once
 #include <unordered_map>
 #include <string>
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+#pragma clang diagnostic ignored "-Wdeprecated-literal-operator"
 #include "json.hpp"
+#pragma clang diagnostic pop
 
 // Represents one revision of a scene/prefab file.
 // Constructor loads the file, assigns stable string IDs to every array entry,

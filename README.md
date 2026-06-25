@@ -2,18 +2,28 @@ FireMerge is a custom tool for merging Cocos Creator layouts. It was origonally 
 
 **Building**:
 
-FireMerge is built with cmake.
-
-On Linux or Mac
+Requires a C++17 compiler and `make`.
 
 ```
 git clone https://github.com/DavidDeSimone/FireMerge
 cd FireMerge/
-mkdir build && cd build/
-cmake ..
 make
 sudo make install
 ```
+
+To build a debug binary:
+
+```
+make debug
+```
+
+To override the compiler:
+
+```
+make CC=g++
+```
+
+Binaries are placed in `build/release/` and `build/debug/`.
 
 **Usage**:
 
