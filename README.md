@@ -1,4 +1,6 @@
-FireMerge is a custom tool for merging Cocos Creator layouts. It was origonally written for mecurial, but should work with git and svn.
+FireMerge is a git merge driver for Cocos Creator scene and prefab files. It performs a three-way property-level merge that eliminates false conflicts caused by `__id__` index shifting.
+
+Supports CC1.x, CC2.4, and CC3.8 `.fire`, `.prefab`, and `.scene` files.
 
 **Building**:
 
@@ -25,234 +27,47 @@ make CC=g++
 
 Binaries are placed in `build/release/` and `build/debug/`.
 
-**Usage**:
+**Setup**:
 
-You will need to set up a custom merge tool in your version control program of choice
-
-*Mecurial*
-
-Add the following lines to your .hgrc
+Add to your `.gitattributes`:
 
 ```
-[merge-tools]
-mergetool.priority = 100
-mergetool.premerge = False
-mergetool.args = $local $other $base -o $output
-FireMerge = /usr/local/bin/FireMerge 
-
-[merge-patterns]
-**.fire = /usr/local/bin/FireMerge
-**.prefab = /usr/local/bin/FireMerge
+**.fire   merge=CocosCreatorMerge
+**.prefab merge=CocosCreatorMerge
+**.scene  merge=CocosCreatorMerge
 ```
 
-You can customize the file locations firemerge will look for, or the location of fire merge by editing the merge-patterns.
-
-*Git*
-
-You will need to add the following lines to your .gitattributes
+Add to your git config (`~/.gitconfig` or `.git/config`):
 
 ```
-**.fire merge=FireMerge
-**.prefab merge=FireMerge
+[merge "CocosCreatorMerge"]
+  name = CocosCreatorMerge
+  driver = /usr/local/bin/cocos-creator-merge %A %O %B
 ```
 
-Add the following to your git config file
+Or run:
 
 ```
-[merge "FireMerge"]
-name = FireMerge
-driver = /usr/local/bin/FireMerge %A %O %B
+git config merge.CocosCreatorMerge.driver "/usr/local/bin/cocos-creator-merge %A %O %B"
 ```
 
-OR run
+**How it works**:
+
+Cocos Creator files are flat JSON arrays where objects reference each other by integer index (`__id__`). Those indices shift whenever nodes are added or removed, causing git to report conflicts on every reference even when the actual content is unchanged.
+
+FireMerge converts all `__id__` integer refs to stable UUID strings before comparing (using each object's `_id`, `fileId`, or a derived composite key), performs a property-level three-way merge, then converts back to integer indices.
+
+Result: branches that touched different parts of the scene merge cleanly with no manual intervention.
+
+**Conflicts**:
+
+If both branches changed the same property to different values, FireMerge takes the local (`%A`) value, reports the conflict to stderr, and exits with code 1 — the same signal git uses to indicate a merge driver left unresolved conflicts.
 
 ```
-git config merge.FireMerge.driver "/usr/local/bin/FireMerge %A %O %B"
+CONFLICTS (1):
+  _name  id=834f1BEjTBPUZb6xY6a58Mr
+    MINE:   "ConfirmButton"
+    THEIRS: "SubmitButton"
 ```
 
-
-**Handling Merges**
-
-FireMerge does NODE based merging. This means that it will compare individually identified nodes against each other. If either of these nodes have been touched across branches, FireMerge will report a conflict you will need to manually resolve. Due to CocosCreator's array indexing pattern, conflicted nodes will occupy have the following format
-
-```
-    {
-        "MINE >>>>>>>>": {
-            "__type__": "cc.Node",
-            "_active": true,
-            "_anchorPoint": {
-                "__type__": "cc.Vec2",
-                "x": 0.5,
-                "y": 0.5
-            },
-            "_cascadeOpacityEnabled": true,
-            "_children": [
-                {
-                    "__id__": 3
-                }
-            ],
-            "_color": {
-                "__type__": "cc.Color",
-                "a": 255,
-                "b": 255,
-                "g": 255,
-                "r": 255
-            },
-            "_components": [
-                {
-                    "__id__": 4
-                }
-            ],
-            "_contentSize": {
-                "__type__": "cc.Size",
-                "height": 640,
-                "width": 960
-            },
-            "_globalZOrder": 0,
-            "_id": "834f1BEjTBPUZb6xY6a58Mr",
-            "_localZOrder": 0,
-            "_name": "Canvas",
-            "_objFlags": 0,
-            "_opacity": 255,
-            "_opacityModifyRGB": false,
-            "_parent": {
-                "__id__": 1
-            },
-            "_position": {
-                "__type__": "cc.Vec2",
-                "x": 480,
-                "y": 320
-            },
-            "_prefab": null,
-            "_rotationX": 0,
-            "_rotationY": 0,
-            "_scaleX": 1,
-            "_scaleY": 1,
-            "_skewX": 0,
-            "_skewY": 0,
-            "_tag": -1,
-            "groupIndex": 0
-        },
-        "THEIRS <<<<<<<<": {
-            "__type__": "cc.Node",
-            "_active": true,
-            "_anchorPoint": {
-                "__type__": "cc.Vec2",
-                "x": 0.5,
-                "y": 0.5
-            },
-            "_cascadeOpacityEnabled": true,
-            "_children": [
-                {
-                    "__id__": 5
-                }
-            ],
-            "_color": {
-                "__type__": "cc.Color",
-                "a": 255,
-                "b": 255,
-                "g": 255,
-                "r": 255
-            },
-            "_components": [
-                {
-                    "__id__": 4
-                }
-            ],
-            "_contentSize": {
-                "__type__": "cc.Size",
-                "height": 640,
-                "width": 960
-            },
-            "_globalZOrder": 0,
-            "_id": "834f1BEjTBPUZb6xY6a58Mr",
-            "_localZOrder": 0,
-            "_name": "Canvas",
-            "_objFlags": 0,
-            "_opacity": 255,
-            "_opacityModifyRGB": false,
-            "_parent": {
-                "__id__": 1
-            },
-            "_position": {
-                "__type__": "cc.Vec2",
-                "x": 480,
-                "y": 320
-            },
-            "_prefab": null,
-            "_rotationX": 0,
-            "_rotationY": 0,
-            "_scaleX": 1,
-            "_scaleY": 1,
-            "_skewX": 0,
-            "_skewY": 0,
-            "_tag": -1,
-            "groupIndex": 0
-        }
-    },
-```
-
-Here, this conflicted node has been filled with two keys, MINE and THEIRS. It should be replaced with the resulting non-conflicted node. An example output of the merge would be
-
-```
-{
-            "__type__": "cc.Node",
-            "_active": true,
-            "_anchorPoint": {
-                "__type__": "cc.Vec2",
-                "x": 0.5,
-                "y": 0.5
-            },
-            "_cascadeOpacityEnabled": true,
-            "_children": [
-                {
-                    "__id__": 5,
-		    "__id__": 3
-                }
-            ],
-            "_color": {
-                "__type__": "cc.Color",
-                "a": 255,
-                "b": 255,
-                "g": 255,
-                "r": 255
-            },
-            "_components": [
-                {
-                    "__id__": 4
-                }
-            ],
-            "_contentSize": {
-                "__type__": "cc.Size",
-                "height": 640,
-                "width": 960
-            },
-            "_globalZOrder": 0,
-            "_id": "834f1BEjTBPUZb6xY6a58Mr",
-            "_localZOrder": 0,
-            "_name": "Canvas",
-            "_objFlags": 0,
-            "_opacity": 255,
-            "_opacityModifyRGB": false,
-            "_parent": {
-                "__id__": 1
-            },
-            "_position": {
-                "__type__": "cc.Vec2",
-                "x": 480,
-                "y": 320
-            },
-            "_prefab": null,
-            "_rotationX": 0,
-            "_rotationY": 0,
-            "_scaleX": 1,
-            "_scaleY": 1,
-            "_skewX": 0,
-            "_skewY": 0,
-            "_tag": -1,
-            "groupIndex": 0
-        }
-
-```
-
-In our example here, two branches both added a node to a scene. Our resolution was to manually merge their child arrays, adding them together. 
+Open the file in a text editor to find the conflicting node by its `_id` and resolve manually.
