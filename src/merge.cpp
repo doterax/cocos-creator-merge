@@ -31,6 +31,8 @@ using json = nlohmann::json;
 static constexpr int NO_CONFLICT  = 0;
 static constexpr int HAS_CONFLICT = 1;
 
+static constexpr const char* VERSION = "0.1.0";
+
 // ══════════════════════════════════════════════════════════════════════════
 // Low-level helpers
 // ══════════════════════════════════════════════════════════════════════════
@@ -583,16 +585,17 @@ static int doMerge(
 
 // ══════════════════════════════════════════════════════════════════════════
 // Entry point
-// git invokes: firemerge <mine> <base> <theirs> [output]
+// git invokes: cocos-creator-merge <mine> <base> <theirs> [output]
 // Writes merged result to <output> (defaults to <mine> if omitted).
 // Returns 0 on clean merge, 1 if any conflicts remain.
 // ══════════════════════════════════════════════════════════════════════════
 
 int main(int argc, char** argv) {
-	std::cout << "FireMerge" << std::endl;
+
+	std::cout << "Cocos Creator Merge v" << VERSION << std::endl;
 
 	if (argc < 4) {
-		std::cerr << "Usage: firemerge <mine> <base> <theirs> [output]" << std::endl;
+		std::cerr << "Usage: cocos-creator-merge <mine> <base> <theirs> [output]" << std::endl;
 		return 1;
 	}
 
